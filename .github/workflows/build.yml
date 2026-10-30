@@ -1,4 +1,4 @@
-name: Build MoviesFlix Official Android APK
+name: Build MoviesFlix Official Android Release APK
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Setup Python & Image Tools
+      - name: Setup Python & Image Processing
         run: |
           python3 -m pip install --upgrade pip pillow
 
@@ -40,18 +40,21 @@ jobs:
           {
             "appId": "com.moviesflix.app",
             "appName": "MoviesFlix",
-            "webDir": "www"
+            "webDir": "www",
+            "backgroundColor": "#06080e",
+            "android": {
+              "allowMixedContent": true
+            }
           }
           EOF
 
           npx cap add android
 
-      - name: Fix Kotlin Duplicate Class Conflict
+      - name: Fix Kotlin BOM Dependency Conflict
         run: |
-          # Inject Kotlin BOM constraint into android/app/build.gradle to prevent duplicate classes
           sed -i '/dependencies {/a \    implementation platform("org.jetbrains.kotlin:kotlin-bom:1.8.22")' android/app/build.gradle
 
-      - name: Setup Custom App Logo Icons
+      - name: Setup Official Adaptive Launcher Icons & Dark Splash
         run: |
           python3 -c "
           import urllib.request, os
@@ -73,21 +76,46 @@ jobs:
           for folder, s in sizes:
               target_dir = os.path.join(res_dir, folder)
               os.makedirs(target_dir, exist_ok=True)
+              
+              # Square Icon
               resized = img.resize((s, s), Image.Resampling.LANCZOS)
               resized.save(os.path.join(target_dir, 'ic_launcher.png'))
+              
+              # Round Icon
               resized.save(os.path.join(target_dir, 'ic_launcher_round.png'))
-          print('Icons generated successfully!')
+              
+              # Adaptive Foreground
+              resized.save(os.path.join(target_dir, 'ic_launcher_foreground.png'))
+          
+          # Splash screen image setup
+          splash_dir = os.path.join(res_dir, 'drawable')
+          os.makedirs(splash_dir, exist_ok=True)
+          splash_img = img.resize((256, 256), Image.Resampling.LANCZOS)
+          splash_img.save(os.path.join(splash_dir, 'splash.png'))
+          print('Adaptive Icons and Splash Generated!')
           "
 
-      - name: Build Official Android APK
+      - name: Generate Production Keystore & Sign APK
         run: |
+          # Generate a standard secure release keystore
+          keytool -genkeypair -v -keystore release.keystore -alias moviesflix -keyalg RSA -keysize 2048 -validity 10000 -storepass moviesflix123 -keypass moviesflix123 -dname "CN=MoviesFlix, OU=Mobile, O=MoviesFlixCompany, L=Global, S=World, C=US"
+          
           npx cap sync android
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleRelease --no-daemon
+          
+          # Find jarsigner and sign the release APK
+          BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
+          APK_PATH=$(find app/build/outputs/apk/release/ -name "*.apk" | head -n 1)
+          
+          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore ../release.keystore -storepass moviesflix123 -keypass moviesflix123 $APK_PATH moviesflix
+          
+          # Align APK
+          $BUILD_TOOLS_DIR/zipalign -v -p 4 $APK_PATH app/build/outputs/apk/release/MoviesFlix-v1.0.0.apk || cp $APK_PATH app/build/outputs/apk/release/MoviesFlix-v1.0.0.apk
 
-      - name: Upload Downloadable APK
+      - name: Upload Official Production APK
         uses: actions/upload-artifact@v4
         with:
           name: MoviesFlix-v1.0.0-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/release/MoviesFlix-v1.0.0.apk
