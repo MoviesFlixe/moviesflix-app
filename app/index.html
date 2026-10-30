@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>MoviesFlix Official App</title>
+    
     <!-- FontAwesome 6 Pro CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Supabase SDK for Live Sync -->
+    <!-- Supabase SDK for Live Database Sync -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
         * {
             margin: 0;
@@ -15,47 +17,59 @@
             box-sizing: border-box;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             -webkit-tap-highlight-color: transparent;
-            user-select: none;
         }
 
         :root {
             --bg-base: #06080e;
-            --bg-card: #0e1220;
+            --bg-surface: #0a0d17;
+            --bg-card: #111422;
             --cyan-accent: #00e5ff;
             --cyan-glow: rgba(0, 229, 255, 0.4);
             --gold-accent: #f59e0b;
+            --gold-glow: rgba(245, 158, 11, 0.4);
             --pink-accent: #ec4899;
+            --pink-glow: rgba(236, 72, 153, 0.5);
+            --green-accent: #10b981;
+            --imdb-yellow: #f5c518;
             --text-main: #f0f3fa;
             --text-sub: #8c94ac;
-            --bottom-nav-height: 65px;
+            --bottom-nav-height: 64px;
         }
 
         body {
             background-color: var(--bg-base);
             color: var(--text-main);
             min-height: 100vh;
-            padding-bottom: calc(var(--bottom-nav-height) + 15px);
+            padding-bottom: calc(var(--bottom-nav-height) + 16px);
             overflow-x: hidden;
         }
 
-        /* NATIVE TOP APP BAR */
+        body.modal-open {
+            overflow: hidden !important;
+            height: 100vh !important;
+        }
+
+        /* ========================================================
+           1. TOP APP HEADER
+           ======================================================== */
         .app-top-header {
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 200;
             background: #090c16;
-            border-bottom: 1.5px solid rgba(0, 229, 255, 0.4);
-            padding: 12px 16px;
+            border-bottom: 2px solid rgba(0, 229, 255, 0.45);
+            padding: 10px 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            box-shadow: 0 4px 20px rgba(0, 229, 255, 0.15);
         }
 
         .app-brand {
             display: flex;
             align-items: center;
             gap: 10px;
+            cursor: pointer;
         }
 
         .app-brand img {
@@ -69,38 +83,61 @@
             font-size: 20px;
             font-weight: 900;
             color: #fff;
-            letter-spacing: 1px;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
         }
 
         .app-brand-title span {
             color: var(--cyan-accent);
-            text-shadow: 0 0 8px var(--cyan-glow);
+            text-shadow: 0 0 10px var(--cyan-glow);
         }
 
-        .header-action-btn {
-            background: #141829;
+        .header-actions-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-icon-btn {
+            background: var(--bg-card);
             border: 1px solid rgba(0, 229, 255, 0.3);
             color: var(--cyan-accent);
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 15px;
             cursor: pointer;
+            position: relative;
         }
 
-        /* NATIVE BOTTOM NAVIGATION BAR */
+        .notif-badge {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            background: #ff0055;
+            color: white;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 5px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        /* ========================================================
+           2. BOTTOM NAVIGATION BAR
+           ======================================================== */
         .app-bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100vw;
             height: var(--bottom-nav-height);
-            background: rgba(9, 12, 22, 0.95);
+            background: rgba(9, 12, 22, 0.96);
             backdrop-filter: blur(15px);
-            border-top: 1px solid rgba(0, 229, 255, 0.25);
+            border-top: 1.5px solid rgba(0, 229, 255, 0.35);
             display: flex;
             justify-content: space-around;
             align-items: center;
@@ -137,11 +174,13 @@
             text-shadow: 0 0 10px var(--cyan-glow);
         }
 
-        /* TAB SCREENS */
+        /* ========================================================
+           3. APP TAB SCREENS
+           ======================================================== */
         .tab-screen {
             display: none;
-            padding: 14px 12px;
-            animation: fadeInTab 0.2s ease-in;
+            padding: 16px 12px;
+            animation: fadeInTab 0.25s ease-out;
         }
 
         .tab-screen.active {
@@ -149,11 +188,11 @@
         }
 
         @keyframes fadeInTab {
-            from { opacity: 0; transform: translateY(4px); }
+            from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* SEARCH BAR */
+        /* SEARCH BOX */
         .app-search-box {
             position: relative;
             margin-bottom: 16px;
@@ -168,7 +207,6 @@
             color: #fff;
             font-size: 14px;
             outline: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
         }
 
         .app-search-box input:focus {
@@ -184,9 +222,11 @@
             color: var(--cyan-accent);
         }
 
-        /* HORIZONTAL FLIP SHELVES */
+        /* ========================================================
+           4. HORIZONTAL FLIP CAROUSELS & MOVIE CARDS
+           ======================================================== */
         .content-section {
-            margin-bottom: 24px;
+            margin-bottom: 26px;
         }
 
         .section-header-title {
@@ -197,7 +237,7 @@
             align-items: center;
             gap: 8px;
             margin-bottom: 12px;
-            padding-left: 4px;
+            padding-left: 2px;
         }
 
         .section-header-title .tag-glow {
@@ -214,63 +254,97 @@
             overflow-x: auto;
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
-            padding-bottom: 8px;
+            padding: 4px 2px 14px 2px;
         }
 
         .horizontal-row-shelf::-webkit-scrollbar {
             display: none;
         }
 
-        .movie-app-card {
-            flex: 0 0 140px;
-            width: 140px;
+        .movie-card {
+            flex: 0 0 148px;
+            width: 148px;
             background: var(--bg-card);
             border-radius: 10px;
             overflow: hidden;
+            cursor: pointer;
             border: 1px solid rgba(255,255,255,0.06);
             display: flex;
             flex-direction: column;
-            cursor: pointer;
+            transition: 0.25s all;
+            position: relative;
         }
 
-        .movie-app-card:active {
+        .movie-card:active {
             transform: scale(0.96);
             border-color: var(--cyan-accent);
         }
 
-        .card-poster {
+        .poster-box {
             width: 100%;
             aspect-ratio: 2 / 3;
-            background: #090c14;
+            background: #090b14;
             position: relative;
+            overflow: hidden;
         }
 
-        .card-poster img {
+        .poster-box img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
         }
 
-        .card-badge {
+        .quality-badge {
             position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(0,0,0,0.85);
+            top: 6px;
+            right: 6px;
+            background: rgba(0, 0, 0, 0.85);
             color: var(--cyan-accent);
             font-size: 9px;
             font-weight: 800;
-            padding: 2px 5px;
+            padding: 2px 6px;
             border-radius: 4px;
             border: 1px solid var(--cyan-accent);
         }
 
-        .card-info {
-            padding: 8px;
+        .type-badge {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            background: rgba(0, 229, 255, 0.9);
+            color: #000;
+            font-size: 8px;
+            font-weight: 900;
+            padding: 2px 5px;
+            border-radius: 3px;
+            text-transform: uppercase;
         }
 
-        .card-title {
-            font-size: 12px;
+        .rank-badge-watermark {
+            position: absolute;
+            bottom: 4px;
+            left: 6px;
+            font-size: 38px;
+            font-weight: 900;
+            font-style: italic;
+            color: rgba(255, 255, 255, 0.95);
+            -webkit-text-stroke: 1.5px var(--cyan-accent);
+            text-shadow: 0 0 16px rgba(0, 229, 255, 0.8);
+            line-height: 1;
+            pointer-events: none;
+        }
+
+        .movie-details {
+            padding: 9px 8px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .movie-name {
+            font-size: 13px;
             font-weight: 700;
             color: #fff;
             white-space: nowrap;
@@ -278,31 +352,352 @@
             text-overflow: ellipsis;
         }
 
-        .card-meta {
-            font-size: 10px;
+        .movie-meta-sub {
+            font-size: 11px;
             color: var(--text-sub);
-            margin-top: 3px;
+            margin-top: 4px;
             display: flex;
             justify-content: space-between;
         }
 
-        /* SETTINGS & VERSION PANEL */
+        /* GRID VIEW FOR EXPLORE */
+        .movies-grid-view {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        /* ========================================================
+           5. FULL SCREEN POST DETAIL MODAL (THE REAL EXPERIENCE)
+           ======================================================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #07080d;
+            z-index: 3000;
+            display: none;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 0;
+        }
+
+        .modal-box {
+            background: #090b14;
+            width: 100%;
+            min-height: 100vh;
+            padding: 12px 14px 100px 14px;
+            margin: 0 auto;
+            box-sizing: border-box;
+        }
+
+        .modal-top-nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            margin-bottom: 14px;
+            border-bottom: 1px solid rgba(0, 229, 255, 0.25);
+        }
+
+        .modal-back-btn {
+            background: #141724;
+            border: 1px solid var(--border-cyan, rgba(0,229,255,0.4));
+            color: var(--cyan-accent);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .close-modal-btn {
+            background: #141724;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #fff;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .post-header-view {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .post-poster-img {
+            width: 120px;
+            height: 175px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.2);
+            flex-shrink: 0;
+        }
+
+        .post-meta-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .post-meta-info h2 {
+            font-size: 18px;
+            color: #fff;
+            margin-bottom: 8px;
+            line-height: 1.35;
+            word-break: break-word;
+        }
+
+        .post-badges-row {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .meta-pill {
+            background: #171b2d;
+            color: var(--cyan-accent);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        /* IMDB PANEL */
+        .imdb-details-panel {
+            background: #090a12;
+            border: 1px solid rgba(245, 197, 24, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 14px;
+        }
+
+        .imdb-badge {
+            background: var(--imdb-yellow);
+            color: #000;
+            font-weight: 900;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .post-description-box {
+            background: #090a10;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.06);
+            margin-bottom: 16px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #b2b9cb;
+        }
+
+        /* CAST CAROUSEL */
+        .cast-scroll-container {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .cast-actor-card {
+            flex: 0 0 90px;
+            width: 90px;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .cast-photo-box {
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #151828;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .cast-photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .cast-name {
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
+            margin-top: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* STREAMING SERVERS & ACTION BUTTONS */
+        .servers-btn-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .server-btn {
+            background: #141726;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            color: #d1d5e3;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .server-btn.active {
+            background: var(--cyan-accent);
+            color: #000;
+            font-weight: 800;
+        }
+
+        .btn-watch-online {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            background: linear-gradient(90deg, #00e5ff 0%, #0088cc 100%);
+            color: #000;
+            font-weight: 800;
+            font-size: 14px;
+            padding: 13px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
+            margin-bottom: 14px;
+        }
+
+        .player-container-box {
+            display: none;
+            margin-bottom: 16px;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .player-frame {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            min-height: 240px;
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            background: #000;
+        }
+
+        /* DOWNLOAD MIRRORS */
+        .download-mirror-card {
+            background: #0b0e18;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            border-radius: 8px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-decoration: none;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .dl-res-badge {
+            font-size: 11px;
+            font-weight: 900;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: var(--cyan-accent);
+            color: #000;
+        }
+
+        .dl-pill-btn {
+            background: var(--green-accent);
+            color: #000;
+            font-size: 11px;
+            font-weight: 900;
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+
+        /* SERIES SEASONS & EPISODES */
+        .season-tabs-row {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            margin-bottom: 12px;
+        }
+
+        .season-tab-btn {
+            background: #141724;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #a0a8be;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .season-tab-btn.active {
+            background: var(--cyan-accent);
+            color: #000;
+            font-weight: 800;
+        }
+
+        .episodes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .ep-btn {
+            background: #141724;
+            border: 1px solid rgba(0, 229, 255, 0.2);
+            color: #fff;
+            padding: 8px 6px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .ep-btn.active {
+            background: var(--cyan-accent);
+            color: #000;
+            font-weight: 800;
+        }
+
+        /* SETTINGS SCREEN */
         .settings-card {
             background: var(--bg-card);
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 10px;
             padding: 16px;
             margin-bottom: 14px;
-        }
-
-        .settings-card-title {
-            font-size: 14px;
-            font-weight: 800;
-            color: var(--cyan-accent);
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .setting-row {
@@ -312,10 +707,6 @@
             padding: 10px 0;
             border-bottom: 1px solid rgba(255,255,255,0.05);
             font-size: 13px;
-        }
-
-        .setting-row:last-child {
-            border-bottom: none;
         }
 
         .btn-update-check {
@@ -328,66 +719,28 @@
             padding: 12px;
             font-size: 13px;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: 0 0 15px var(--cyan-glow);
             margin-top: 10px;
-        }
-
-        /* FULLSCREEN PLAYER OVERLAY */
-        .player-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-        }
-
-        .player-bar {
-            padding: 10px 14px;
-            background: rgba(10,10,10,0.9);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .player-bar button {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        .player-iframe {
-            flex: 1;
-            width: 100%;
-            border: none;
         }
     </style>
 </head>
 <body>
 
-    <!-- TOP HEADER -->
+    <!-- TOP APP BAR -->
     <header class="app-top-header">
-        <div class="app-brand">
-            <img src="https://i.ibb.co/TpHBH9m/file-00000000f1908208a1295719135a47e2.png" alt="Icon">
+        <div class="app-brand" onclick="switchTab('tabHome')">
+            <img src="https://i.ibb.co/TpHBH9m/file-00000000f1908208a1295719135a47e2.png" alt="Logo">
             <div class="app-brand-title">Movies<span>Flix</span></div>
         </div>
-        <button class="header-action-btn" onclick="switchTab('tabSettings')" title="App Info">
-            <i class="fa-solid fa-gear"></i>
-        </button>
+        <div class="header-actions-box">
+            <button class="header-icon-btn" onclick="switchTab('tabSettings')" title="Settings">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+        </div>
     </header>
 
     <!-- TAB 1: HOME (BROWSE & CAROUSELS) -->
     <section class="tab-screen active" id="tabHome">
-        <div class="content-section" id="sectionTrending">
+        <div class="content-section" id="sectionTrending" style="display:none;">
             <div class="section-header-title">
                 <div class="tag-glow" style="background:#ec4899; box-shadow:0 0 10px rgba(236,72,153,0.5);"></div>
                 <span>🔥 Top 10 Trending</span>
@@ -395,10 +748,18 @@
             <div class="horizontal-row-shelf" id="shelfTrending"></div>
         </div>
 
-        <div class="content-section" id="sectionRecent">
+        <div class="content-section" id="sectionComingSoon" style="display:none;">
+            <div class="section-header-title">
+                <div class="tag-glow" style="background:#f59e0b; box-shadow:0 0 10px rgba(245,158,11,0.5);"></div>
+                <span>⏳ Coming Soon / Upcoming</span>
+            </div>
+            <div class="horizontal-row-shelf" id="shelfComingSoon"></div>
+        </div>
+
+        <div class="content-section">
             <div class="section-header-title">
                 <div class="tag-glow" style="background:#ff0055; box-shadow:0 0 10px rgba(255,0,85,0.5);"></div>
-                <span>⚡ Recently Released</span>
+                <span>⚡ Recently Added Releases</span>
             </div>
             <div class="horizontal-row-shelf" id="shelfRecent"></div>
         </div>
@@ -406,16 +767,16 @@
         <div id="dynamicCategoriesShelves"></div>
     </section>
 
-    <!-- TAB 2: EXPLORE / SEARCH -->
+    <!-- TAB 2: EXPLORE / SEARCH (NEVER EMPTY) -->
     <section class="tab-screen" id="tabSearch">
         <div class="app-search-box">
             <i class="fa-solid fa-magnifying-glass"></i>
             <input type="text" id="appSearchInput" placeholder="Search Movies, Series, Dramas...">
         </div>
-        <div class="horizontal-row-shelf" id="searchResultsGrid" style="flex-wrap:wrap; justify-content:space-between; gap:12px;"></div>
+        <div class="movies-grid-view" id="searchResultsGrid"></div>
     </section>
 
-    <!-- TAB 3: CATEGORIES -->
+    <!-- TAB 3: GENRES & CHANNELS -->
     <section class="tab-screen" id="tabCategories">
         <div id="categoriesListTree"></div>
     </section>
@@ -423,7 +784,7 @@
     <!-- TAB 4: APP SETTINGS & IN-APP VERSION CONTROL -->
     <section class="tab-screen" id="tabSettings">
         <div class="settings-card">
-            <div class="settings-card-title">
+            <div style="font-size:15px; font-weight:800; color:var(--cyan-accent); margin-bottom:12px;">
                 <i class="fa-solid fa-mobile-screen"></i> MoviesFlix Official App Information
             </div>
             <div class="setting-row">
@@ -448,11 +809,11 @@
         </div>
 
         <div class="settings-card">
-            <div class="settings-card-title">
-                <i class="fa-solid fa-shield-halved"></i> App Security & Privacy
+            <div style="font-size:15px; font-weight:800; color:var(--cyan-accent); margin-bottom:10px;">
+                <i class="fa-solid fa-shield-halved"></i> Privacy & Notice
             </div>
             <p style="font-size:12px; color:var(--text-sub); line-height:1.6;">
-                This app connects directly to the Supabase Cloud cluster. No user accounts or personal device tracking are utilized.
+                MoviesFlix does not host any media on its servers. All files and video streams are indexed from non-affiliated third-party providers.
             </p>
         </div>
     </section>
@@ -477,16 +838,92 @@
         </button>
     </nav>
 
-    <!-- FULLSCREEN PLAYER MODAL -->
-    <div class="player-overlay" id="appPlayerOverlay">
-        <div class="player-bar">
-            <span id="playerMovieTitle" style="font-size:13px; font-weight:700;">Playing</span>
-            <button onclick="closeAppPlayer()"><i class="fa-solid fa-xmark"></i></button>
+    <!-- ========================================================
+         FULL POST DETAIL VIEW (SAME AS WEBSITE - ZERO CUTS)
+         ======================================================== -->
+    <div class="modal-overlay" id="movieDetailModal">
+        <div class="modal-box">
+            <div class="modal-top-nav-bar">
+                <button type="button" class="modal-back-btn" onclick="closeMovieDetail()">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </button>
+                <div style="font-size:16px; font-weight:800; color:var(--cyan-accent);">MoviesFlix</div>
+                <button type="button" class="close-modal-btn" onclick="closeMovieDetail()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="post-header-view">
+                <img id="postPosterImg" src="" class="post-poster-img" alt="Poster">
+                <div class="post-meta-info">
+                    <h2 id="modalMovieTitle">Movie Title</h2>
+                    <div class="post-badges-row">
+                        <span class="meta-pill" id="badgeType">Movie</span>
+                        <span class="meta-pill" id="badgeQuality">1080p HD</span>
+                        <span class="meta-pill" id="badgeYear">2026</span>
+                        <span class="meta-pill" id="badgeSubCat">Bollywood</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IMDB DETAILS -->
+            <div class="imdb-details-panel" id="modalImdbPanel" style="display:none;">
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                    <span class="imdb-badge">IMDb</span>
+                    <strong style="font-size:15px; color:#fff;" id="modalImdbScore">7.5</strong>
+                </div>
+                <div style="font-size:12px; color:var(--text-sub); line-height:1.6;" id="modalImdbSpecs"></div>
+            </div>
+
+            <!-- STORYLINE -->
+            <div class="post-description-box" id="modalMovieDesc"></div>
+
+            <!-- CAST CAROUSEL -->
+            <div id="modalCastContainer" style="display:none; margin-bottom:16px;">
+                <div style="font-size:14px; font-weight:800; color:#fff; margin-bottom:8px;">
+                    <i class="fa-solid fa-users" style="color:var(--cyan-accent);"></i> Cast & Characters
+                </div>
+                <div class="cast-scroll-container" id="modalCastGrid"></div>
+            </div>
+
+            <!-- SERIES EPISODES SELECTOR -->
+            <div id="seriesEpisodePanel" style="display:none; margin-bottom:16px;">
+                <div style="font-size:13px; font-weight:700; color:var(--cyan-accent); margin-bottom:8px;">
+                    <i class="fa-solid fa-list-ol"></i> Select Episode to Stream & Download:
+                </div>
+                <div class="season-tabs-row" id="seasonTabsContainer"></div>
+                <div class="episodes-grid" id="episodesGridContainer"></div>
+            </div>
+
+            <!-- WATCH BUTTON (MOVIES) -->
+            <div id="movieActionButtons">
+                <div id="serversSwitchContainer" style="display:none; margin-bottom:10px;">
+                    <div style="font-size:12px; font-weight:700; color:var(--cyan-accent); margin-bottom:6px;">
+                        <i class="fa-solid fa-server"></i> Choose Streaming Server:
+                    </div>
+                    <div class="servers-btn-grid" id="modalServersGrid"></div>
+                </div>
+                <button class="btn-watch-online" id="btnTriggerPlayer" onclick="toggleOnlinePlayer()">
+                    <i class="fa-solid fa-circle-play"></i> Watch Online (Stream Player)
+                </button>
+            </div>
+
+            <!-- STREAM PLAYER BOX -->
+            <div class="player-container-box" id="playerWrapper">
+                <iframe id="modalPlayerFrame" class="player-frame" allowfullscreen referrerpolicy="no-referrer" allow="autoplay; fullscreen"></iframe>
+            </div>
+
+            <!-- DOWNLOAD MIRRORS (MOVIES & SERIES) -->
+            <div id="downloadsWrapper" style="margin-top:16px;">
+                <div style="font-size:13px; font-weight:800; color:var(--green-accent); margin-bottom:10px;">
+                    <i class="fa-solid fa-cloud-arrow-down"></i> Available Download Mirrors & Resolutions:
+                </div>
+                <div id="modalDownloadsList"></div>
+            </div>
         </div>
-        <iframe id="appPlayerIframe" class="player-iframe" allowfullscreen allow="autoplay; fullscreen"></iframe>
     </div>
 
-    <!-- APP JAVASCRIPT ENGINE -->
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
     <script>
         const CURRENT_APP_VERSION = "1.0.0";
         const SUPABASE_URL = "https://zidvtzcxktkpzrmyzexw.supabase.co";
@@ -501,7 +938,28 @@
 
         let appMovies = [];
         let appTrending = [];
+        let appComingSoon = [];
         let appCategories = [];
+        let currentPostServers = [];
+        let activeSelectedEpisode = null;
+
+        function sanitizeStreamUrl(rawUrl) {
+            if (!rawUrl) return "";
+            var url = rawUrl.trim();
+            if (url.includes("<iframe") && url.includes("src=")) {
+                var match = url.match(/src=["'](.*?)["']/);
+                if (match && match[1]) url = match[1];
+            }
+            if (url.includes("streamtape.com/v/")) {
+                url = url.replace("streamtape.com/v/", "streamtape.com/e/");
+            }
+            if ((url.includes("lulustream.com") || url.includes("luluvdo.com")) && !url.includes("/e/")) {
+                var parts = url.split("/");
+                var fileCode = parts[parts.length - 1];
+                if (fileCode) url = "https://luluvdo.com/e/" + fileCode.replace(".html", "");
+            }
+            return url;
+        }
 
         async function fetchAppData() {
             if (!supabaseClient) return;
@@ -510,31 +968,67 @@
                 if (data && data.content) {
                     if (Array.isArray(data.content.movies)) appMovies = data.content.movies;
                     if (Array.isArray(data.content.trending)) appTrending = data.content.trending;
+                    if (Array.isArray(data.content.comingSoon)) appComingSoon = data.content.comingSoon;
                     if (Array.isArray(data.content.categories)) appCategories = data.content.categories;
+                    
                     renderAppHome();
+                    renderExploreGrid(appMovies);
                     renderAppCategories();
                 }
             } catch(e) {}
         }
 
         function renderAppHome() {
+            // Trending
+            const sectionTrending = document.getElementById('sectionTrending');
             const shelfTrending = document.getElementById('shelfTrending');
             shelfTrending.innerHTML = '';
-            if (appTrending.length > 0) {
-                appTrending.forEach(t => {
+            if (appTrending && appTrending.length > 0) {
+                sectionTrending.style.display = 'block';
+                const sorted = [...appTrending].sort((a,b) => a.rank - b.rank);
+                sorted.forEach(t => {
                     const m = appMovies.find(item => item.id === t.movieId);
-                    if (m) shelfTrending.appendChild(createAppMovieCard(m));
+                    if (m) shelfTrending.appendChild(createAppMovieCard(m, t.rank));
                 });
             } else {
-                document.getElementById('sectionTrending').style.display = 'none';
+                sectionTrending.style.display = 'none';
             }
 
+            // Coming Soon
+            const sectionComingSoon = document.getElementById('sectionComingSoon');
+            const shelfComingSoon = document.getElementById('shelfComingSoon');
+            shelfComingSoon.innerHTML = '';
+            if (appComingSoon && appComingSoon.length > 0) {
+                sectionComingSoon.style.display = 'block';
+                appComingSoon.forEach(cs => {
+                    const card = document.createElement('div');
+                    card.className = 'movie-card';
+                    card.innerHTML = `
+                        <div class="poster-box">
+                            <span class="type-badge" style="background:#f59e0b; color:#000;">SOON</span>
+                            <img src="${cs.poster}" alt="${cs.title}">
+                        </div>
+                        <div class="movie-details">
+                            <div class="movie-name">${cs.title}</div>
+                            <div class="movie-meta-sub">
+                                <span style="color:#f59e0b;">${cs.releaseDate}</span>
+                            </div>
+                        </div>
+                    `;
+                    shelfComingSoon.appendChild(card);
+                });
+            } else {
+                sectionComingSoon.style.display = 'none';
+            }
+
+            // Recent
             const shelfRecent = document.getElementById('shelfRecent');
             shelfRecent.innerHTML = '';
             appMovies.slice(0, 10).forEach(m => {
                 shelfRecent.appendChild(createAppMovieCard(m));
             });
 
+            // Dynamic Category Shelves
             const dynamicContainer = document.getElementById('dynamicCategoriesShelves');
             dynamicContainer.innerHTML = '';
 
@@ -557,50 +1051,253 @@
             });
         }
 
-        function createAppMovieCard(m) {
+        function createAppMovieCard(m, rank = null) {
             const card = document.createElement('div');
-            card.className = 'movie-app-card';
-            card.onclick = () => playMovieInApp(m);
+            card.className = 'movie-card';
+            card.onclick = () => openMovieDetail(m.id);
+            const isSeries = m.type === 'series';
             card.innerHTML = `
-                <div class="card-poster">
-                    <span class="card-badge">${m.quality || 'HD'}</span>
-                    <img src="${m.poster}" alt="${m.title}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Poster'">
+                <div class="poster-box">
+                    <span class="type-badge" style="${isSeries ? 'background: #00e5ff; color:#000;' : 'background: #6366f1; color:#fff;'}">${isSeries ? 'Series' : 'Movie'}</span>
+                    <span class="quality-badge">${m.quality || '1080p HD'}</span>
+                    ${rank ? `<div class="rank-badge-watermark">#${rank}</div>` : ''}
+                    <img src="${m.poster}" alt="${m.title}" onerror="this.src='https://via.placeholder.com/300x450/111422/00e5ff?text=No+Poster'">
                 </div>
-                <div class="card-info">
-                    <div class="card-title">${m.title}</div>
-                    <div class="card-meta">
+                <div class="movie-details">
+                    <div class="movie-name">${m.title}</div>
+                    <div class="movie-meta-sub">
                         <span>${m.subCategory}</span>
-                        <span>${m.year || '2024'}</span>
+                        <span>${m.year || '2026'}</span>
                     </div>
                 </div>
             `;
             return card;
         }
 
-        function playMovieInApp(m) {
-            let streamUrl = "";
-            if (m.type === 'series' && m.episodes && m.episodes.length > 0) {
-                streamUrl = m.episodes[0].streamUrl;
-            } else if (m.servers && m.servers.length > 0) {
-                streamUrl = m.servers[0].url;
-            } else if (m.streamUrl) {
-                streamUrl = m.streamUrl;
+        /* ========================================================
+           FULL MOVIE DETAIL VIEW LOGIC (EXACTLY AS WEBSITE)
+           ======================================================== */
+        function openMovieDetail(id) {
+            const m = appMovies.find(item => item.id === id);
+            if (!m) return;
+
+            document.getElementById('modalMovieTitle').innerText = `${m.title} (${m.year || '2026'})`;
+            document.getElementById('postPosterImg').src = m.poster;
+            document.getElementById('badgeQuality').innerText = m.quality || '1080p HD';
+            document.getElementById('badgeYear').innerText = m.year || '2026';
+            document.getElementById('badgeSubCat').innerText = m.subCategory;
+            document.getElementById('badgeType').innerText = m.type === 'series' ? 'Series / Drama' : 'Single Movie';
+            document.getElementById('modalMovieDesc').innerText = m.desc || "No synopsis available.";
+
+            // IMDb Panel
+            const imdbPanel = document.getElementById('modalImdbPanel');
+            if (m.imdbRating || m.genre || m.duration) {
+                imdbPanel.style.display = 'block';
+                document.getElementById('modalImdbScore').innerText = m.imdbRating || 'N/A';
+                document.getElementById('modalImdbSpecs').innerHTML = `
+                    <strong>Genre:</strong> ${m.genre || 'Action, Drama'}<br>
+                    <strong>Duration:</strong> ${m.duration || '2h 10m'} &bull; <strong>Country:</strong> ${m.country || 'India'}
+                `;
+            } else {
+                imdbPanel.style.display = 'none';
             }
 
-            if (!streamUrl) {
-                alert("No stream player link available for this title!");
+            // Cast
+            const castContainer = document.getElementById('modalCastContainer');
+            const castGrid = document.getElementById('modalCastGrid');
+            castGrid.innerHTML = '';
+            if (m.cast && m.cast.length > 0) {
+                castContainer.style.display = 'block';
+                m.cast.forEach(c => {
+                    const card = document.createElement('div');
+                    card.className = 'cast-actor-card';
+                    card.innerHTML = `
+                        <div class="cast-photo-box">
+                            <img src="${c.photo || 'https://via.placeholder.com/150x200/151828/00e5ff?text=Actor'}" alt="${c.name}">
+                        </div>
+                        <div class="cast-name">${c.name}</div>
+                    `;
+                    castGrid.appendChild(card);
+                });
+            } else {
+                castContainer.style.display = 'none';
+            }
+
+            // Reset Player
+            const playerWrapper = document.getElementById('playerWrapper');
+            playerWrapper.style.display = 'none';
+            document.getElementById('modalPlayerFrame').src = 'about:blank';
+            document.getElementById('btnTriggerPlayer').innerHTML = `<i class="fa-solid fa-circle-play"></i> Watch Online (Stream Player)`;
+
+            const isSeries = m.type === 'series';
+            const seriesPanel = document.getElementById('seriesEpisodePanel');
+            const movieBtnGroup = document.getElementById('movieActionButtons');
+            const serversContainer = document.getElementById('serversSwitchContainer');
+            const downloadsList = document.getElementById('modalDownloadsList');
+            downloadsList.innerHTML = '';
+
+            if (isSeries && m.episodes && m.episodes.length > 0) {
+                movieBtnGroup.style.display = 'none';
+                seriesPanel.style.display = 'block';
+                setupAppSeriesEpisodes(m.episodes);
+            } else {
+                seriesPanel.style.display = 'none';
+                movieBtnGroup.style.display = 'block';
+
+                currentPostServers = m.servers && m.servers.length > 0 ? m.servers : (m.streamUrl ? [{ name: 'Default Server', url: m.streamUrl }] : []);
+                
+                const sGrid = document.getElementById('modalServersGrid');
+                sGrid.innerHTML = '';
+                if (currentPostServers.length > 1) {
+                    serversContainer.style.display = 'block';
+                    currentPostServers.forEach((srv, sIdx) => {
+                        const btn = document.createElement('button');
+                        btn.className = `server-btn ${sIdx === 0 ? 'active' : ''}`;
+                        btn.innerText = srv.name;
+                        btn.onclick = () => {
+                            document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
+                            document.getElementById('modalPlayerFrame').src = sanitizeStreamUrl(srv.url);
+                        };
+                        sGrid.appendChild(btn);
+                    });
+                } else {
+                    serversContainer.style.display = 'none';
+                }
+
+                // Movie Downloads
+                const dls = m.downloads && m.downloads.length > 0 ? m.downloads : (m.downloadUrl ? [{ quality: '1080p HD', name: 'Mega', url: m.downloadUrl }] : []);
+                if (dls.length > 0) {
+                    dls.forEach(dl => {
+                        const a = document.createElement('a');
+                        a.href = dl.url;
+                        a.target = '_blank';
+                        a.className = 'download-mirror-card';
+                        a.innerHTML = `
+                            <div>
+                                <span class="dl-res-badge">${dl.quality || '1080p'}</span>
+                                <strong style="margin-left:8px;">${dl.name}</strong>
+                                ${dl.size ? `<span style="font-size:11px; color:#9ca3af; margin-left:6px;">(${dl.size})</span>` : ''}
+                            </div>
+                            <span class="dl-pill-btn"><i class="fa-solid fa-download"></i> Download</span>
+                        `;
+                        downloadsList.appendChild(a);
+                    });
+                } else {
+                    downloadsList.innerHTML = '<p style="color:#777; font-size:12px;">No download links available.</p>';
+                }
+            }
+
+            document.body.classList.add('modal-open');
+            document.getElementById('movieDetailModal').style.display = 'block';
+        }
+
+        function closeMovieDetail() {
+            document.getElementById('modalPlayerFrame').src = 'about:blank';
+            document.getElementById('playerWrapper').style.display = 'none';
+            document.body.classList.remove('modal-open');
+            document.getElementById('movieDetailModal').style.display = 'none';
+        }
+
+        function toggleOnlinePlayer() {
+            const pWrap = document.getElementById('playerWrapper');
+            const btn = document.getElementById('btnTriggerPlayer');
+            if (pWrap.style.display === 'block') {
+                pWrap.style.display = 'none';
+                document.getElementById('modalPlayerFrame').src = 'about:blank';
+                btn.innerHTML = `<i class="fa-solid fa-circle-play"></i> Watch Online (Stream Player)`;
+            } else {
+                pWrap.style.display = 'block';
+                if (currentPostServers.length > 0) {
+                    document.getElementById('modalPlayerFrame').src = sanitizeStreamUrl(currentPostServers[0].url);
+                }
+                btn.innerHTML = `<i class="fa-solid fa-eye-slash"></i> Hide Player`;
+            }
+        }
+
+        /* SERIES SETUP */
+        function setupAppSeriesEpisodes(episodesList) {
+            const sTabs = document.getElementById('seasonTabsContainer');
+            sTabs.innerHTML = '';
+            const seasons = [...new Set(episodesList.map(e => e.season || 'Season 1'))];
+            seasons.forEach((season, sIdx) => {
+                const btn = document.createElement('button');
+                btn.className = `season-tab-btn ${sIdx === 0 ? 'active' : ''}`;
+                btn.innerText = season;
+                btn.onclick = () => {
+                    document.querySelectorAll('.season-tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderAppSeasonEpisodes(season, episodesList);
+                };
+                sTabs.appendChild(btn);
+            });
+            renderAppSeasonEpisodes(seasons[0], episodesList);
+        }
+
+        function renderAppSeasonEpisodes(season, episodesList) {
+            const epGrid = document.getElementById('episodesGridContainer');
+            epGrid.innerHTML = '';
+            const eps = episodesList.filter(e => (e.season || 'Season 1') === season);
+            eps.forEach((ep, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `ep-btn ${idx === 0 ? 'active' : ''}`;
+                btn.innerText = ep.title || `Ep ${idx+1}`;
+                btn.onclick = () => {
+                    document.querySelectorAll('.ep-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    playAppEpisode(ep);
+                };
+                epGrid.appendChild(btn);
+            });
+            if (eps.length > 0) playAppEpisode(eps[0]);
+        }
+
+        function playAppEpisode(ep) {
+            const pWrap = document.getElementById('playerWrapper');
+            pWrap.style.display = 'block';
+            document.getElementById('modalPlayerFrame').src = sanitizeStreamUrl(ep.streamUrl);
+
+            // Episode Downloads
+            const dlContainer = document.getElementById('modalDownloadsList');
+            dlContainer.innerHTML = '';
+            const epDls = (ep.downloads && ep.downloads.length > 0) ? ep.downloads : (ep.downloadUrl ? [{ quality: '720p HD', name: 'Mega', url: ep.downloadUrl }] : []);
+            if (epDls.length > 0) {
+                epDls.forEach(dl => {
+                    const a = document.createElement('a');
+                    a.href = dl.url;
+                    a.target = '_blank';
+                    a.className = 'download-mirror-card';
+                    a.innerHTML = `
+                        <div>
+                            <span class="dl-res-badge">${dl.quality || '720p'}</span>
+                            <strong style="margin-left:8px;">${dl.name}</strong>
+                            ${dl.size ? `<span style="font-size:11px; color:#9ca3af; margin-left:6px;">(${dl.size})</span>` : ''}
+                        </div>
+                        <span class="dl-pill-btn"><i class="fa-solid fa-download"></i> Download</span>
+                    `;
+                    dlContainer.appendChild(a);
+                });
+            } else {
+                dlContainer.innerHTML = '<p style="color:#777; font-size:12px;">No downloads available for this episode.</p>';
+            }
+        }
+
+        /* EXPLORE & GENRES */
+        function renderExploreGrid(list) {
+            const grid = document.getElementById('searchResultsGrid');
+            grid.innerHTML = '';
+            list.forEach(m => grid.appendChild(createAppMovieCard(m)));
+        }
+
+        document.getElementById('appSearchInput').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase().trim();
+            if (!q) {
+                renderExploreGrid(appMovies);
                 return;
             }
-
-            document.getElementById('playerMovieTitle').innerText = m.title;
-            document.getElementById('appPlayerIframe').src = streamUrl;
-            document.getElementById('appPlayerOverlay').style.display = 'flex';
-        }
-
-        function closeAppPlayer() {
-            document.getElementById('appPlayerIframe').src = 'about:blank';
-            document.getElementById('appPlayerOverlay').style.display = 'none';
-        }
+            const res = appMovies.filter(m => m.title.toLowerCase().includes(q) || m.subCategory.toLowerCase().includes(q));
+            renderExploreGrid(res);
+        });
 
         function renderAppCategories() {
             const list = document.getElementById('categoriesListTree');
@@ -609,11 +1306,13 @@
                 const box = document.createElement('div');
                 box.className = 'settings-card';
                 box.innerHTML = `
-                    <div class="settings-card-title"><i class="fa-solid fa-folder"></i> ${cat.name}</div>
+                    <div style="font-size:14px; font-weight:800; color:var(--cyan-accent); margin-bottom:10px;">
+                        <i class="fa-solid fa-folder"></i> ${cat.name}
+                    </div>
                     <div style="display:flex; flex-wrap:wrap; gap:8px;">
                         ${cat.subcategories.map(s => {
                             const name = typeof s === 'string' ? s : s.name;
-                            return `<span style="background:#141829; border:1px solid rgba(0,229,255,0.3); color:#fff; font-size:11px; padding:5px 10px; border-radius:6px; cursor:pointer;" onclick="filterAppCategory('${name}')">${name}</span>`;
+                            return `<span style="background:#141829; border:1px solid rgba(0,229,255,0.3); color:#fff; font-size:11px; padding:6px 12px; border-radius:6px; cursor:pointer;" onclick="filterAppCategory('${name}')">${name}</span>`;
                         }).join('')}
                     </div>
                 `;
@@ -625,23 +1324,7 @@
             switchTab('tabSearch');
             document.getElementById('appSearchInput').value = subName;
             const res = appMovies.filter(m => m.subCategory.toLowerCase() === subName.toLowerCase());
-            renderSearchResults(res);
-        }
-
-        document.getElementById('appSearchInput').addEventListener('input', (e) => {
-            const q = e.target.value.toLowerCase().trim();
-            if (!q) {
-                document.getElementById('searchResultsGrid').innerHTML = '';
-                return;
-            }
-            const res = appMovies.filter(m => m.title.toLowerCase().includes(q) || m.subCategory.toLowerCase().includes(q));
-            renderSearchResults(res);
-        });
-
-        function renderSearchResults(list) {
-            const grid = document.getElementById('searchResultsGrid');
-            grid.innerHTML = '';
-            list.forEach(m => grid.appendChild(createAppMovieCard(m)));
+            renderExploreGrid(res);
         }
 
         function switchTab(tabId) {
@@ -659,9 +1342,10 @@
         }
 
         function checkAppUpdates() {
-            alert("App is up to date!\nInstalled Version: v" + CURRENT_APP_VERSION + "\nNo updates required.");
+            alert("MoviesFlix App v" + CURRENT_APP_VERSION + "\nStatus: Up to date!\nConnected to Supabase Live Database.");
         }
 
+        // INITIAL LOAD
         fetchAppData();
     </script>
 </body>
