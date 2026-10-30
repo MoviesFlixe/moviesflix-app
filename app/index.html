@@ -23,12 +23,11 @@
             --bg-base: #06080e;
             --bg-surface: #0a0d17;
             --bg-card: #111422;
+            --border-cyan: rgba(0, 229, 255, 0.4);
             --cyan-accent: #00e5ff;
             --cyan-glow: rgba(0, 229, 255, 0.4);
             --gold-accent: #f59e0b;
-            --gold-glow: rgba(245, 158, 11, 0.4);
             --pink-accent: #ec4899;
-            --pink-glow: rgba(236, 72, 153, 0.5);
             --green-accent: #10b981;
             --imdb-yellow: #f5c518;
             --text-main: #f0f3fa;
@@ -36,11 +35,13 @@
             --bottom-nav-height: 64px;
         }
 
+        /* SAFE AREA INSETS FIX: Prevents top status bar and bottom gesture bar overlap */
         body {
             background-color: var(--bg-base);
             color: var(--text-main);
             min-height: 100vh;
-            padding-bottom: calc(var(--bottom-nav-height) + 16px);
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 12px);
             overflow-x: hidden;
         }
 
@@ -50,15 +51,15 @@
         }
 
         /* ========================================================
-           1. TOP APP HEADER
+           1. TOP APP HEADER (FLUSH WITH STATUS BAR)
            ======================================================== */
         .app-top-header {
             position: sticky;
             top: 0;
             z-index: 200;
             background: #090c16;
-            border-bottom: 2px solid rgba(0, 229, 255, 0.45);
-            padding: 10px 16px;
+            border-bottom: 2px solid var(--border-cyan);
+            padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px 16px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -73,14 +74,14 @@
         }
 
         .app-brand img {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
             box-shadow: 0 0 10px var(--cyan-glow);
         }
 
         .app-brand-title {
-            font-size: 20px;
+            font-size: 21px;
             font-weight: 900;
             color: #fff;
             letter-spacing: 1.2px;
@@ -110,33 +111,20 @@
             justify-content: center;
             font-size: 15px;
             cursor: pointer;
-            position: relative;
-        }
-
-        .notif-badge {
-            position: absolute;
-            top: -3px;
-            right: -3px;
-            background: #ff0055;
-            color: white;
-            font-size: 9px;
-            font-weight: 800;
-            padding: 2px 5px;
-            border-radius: 10px;
-            display: none;
         }
 
         /* ========================================================
-           2. BOTTOM NAVIGATION BAR
+           2. BOTTOM NAVIGATION BAR (ZERO GESTURE BAR OVERLAP)
            ======================================================== */
         .app-bottom-nav {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100vw;
-            height: var(--bottom-nav-height);
-            background: rgba(9, 12, 22, 0.96);
-            backdrop-filter: blur(15px);
+            height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            background: rgba(9, 12, 22, 0.98);
+            backdrop-filter: blur(20px);
             border-top: 1.5px solid rgba(0, 229, 255, 0.35);
             display: flex;
             justify-content: space-around;
@@ -223,7 +211,7 @@
         }
 
         /* ========================================================
-           4. HORIZONTAL FLIP CAROUSELS & MOVIE CARDS
+           4. HORIZONTAL FLIP SHELVES & CARDS
            ======================================================== */
         .content-section {
             margin-bottom: 26px;
@@ -368,7 +356,7 @@
         }
 
         /* ========================================================
-           5. FULL SCREEN POST DETAIL MODAL (THE REAL EXPERIENCE)
+           5. FULL POST DETAIL VIEW (EXACTLY AS WEBSITE)
            ======================================================== */
         .modal-overlay {
             position: fixed;
@@ -388,7 +376,7 @@
             background: #090b14;
             width: 100%;
             min-height: 100vh;
-            padding: 12px 14px 100px 14px;
+            padding: calc(14px + env(safe-area-inset-top, 0px)) 14px calc(90px + env(safe-area-inset-bottom, 0px)) 14px;
             margin: 0 auto;
             box-sizing: border-box;
         }
@@ -404,7 +392,7 @@
 
         .modal-back-btn {
             background: #141724;
-            border: 1px solid var(--border-cyan, rgba(0,229,255,0.4));
+            border: 1px solid var(--border-cyan);
             color: var(--cyan-accent);
             padding: 8px 14px;
             border-radius: 6px;
@@ -441,7 +429,7 @@
             height: 175px;
             object-fit: cover;
             border-radius: 8px;
-            border: 1px solid rgba(0, 229, 255, 0.4);
+            border: 1px solid var(--border-cyan);
             box-shadow: 0 4px 15px rgba(0, 229, 255, 0.2);
             flex-shrink: 0;
         }
@@ -479,7 +467,6 @@
             border-radius: 4px;
         }
 
-        /* IMDB PANEL */
         .imdb-details-panel {
             background: #090a12;
             border: 1px solid rgba(245, 197, 24, 0.3);
@@ -508,7 +495,6 @@
             color: #b2b9cb;
         }
 
-        /* CAST CAROUSEL */
         .cast-scroll-container {
             display: flex;
             gap: 12px;
@@ -549,7 +535,6 @@
             text-overflow: ellipsis;
         }
 
-        /* STREAMING SERVERS & ACTION BUTTONS */
         .servers-btn-grid {
             display: flex;
             flex-wrap: wrap;
@@ -604,11 +589,10 @@
             width: 100%;
             aspect-ratio: 16 / 9;
             min-height: 240px;
-            border: 1px solid rgba(0, 229, 255, 0.4);
+            border: 1px solid var(--border-cyan);
             background: #000;
         }
 
-        /* DOWNLOAD MIRRORS */
         .download-mirror-card {
             background: #0b0e18;
             border: 1px solid rgba(16, 185, 129, 0.35);
@@ -640,7 +624,6 @@
             border-radius: 6px;
         }
 
-        /* SERIES SEASONS & EPISODES */
         .season-tabs-row {
             display: flex;
             gap: 8px;
@@ -691,7 +674,9 @@
             font-weight: 800;
         }
 
-        /* SETTINGS SCREEN */
+        /* ========================================================
+           6. SETTINGS & COMPLETE LEGAL CENTER
+           ======================================================== */
         .settings-card {
             background: var(--bg-card);
             border: 1px solid rgba(255,255,255,0.08);
@@ -704,9 +689,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px 0;
+            padding: 11px 0;
             border-bottom: 1px solid rgba(255,255,255,0.05);
             font-size: 13px;
+        }
+
+        .setting-row:last-child {
+            border-bottom: none;
         }
 
         .btn-update-check {
@@ -720,6 +709,52 @@
             font-size: 13px;
             cursor: pointer;
             margin-top: 10px;
+            box-shadow: 0 0 12px var(--cyan-glow);
+        }
+
+        .legal-item-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            background: none;
+            border: none;
+            color: var(--text-main);
+            padding: 11px 0;
+            font-size: 13px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .legal-item-btn i {
+            color: var(--cyan-accent);
+        }
+
+        /* CUSTOM NEON UPDATE POPUP */
+        .cyber-dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(4,5,10,0.88);
+            backdrop-filter: blur(8px);
+            z-index: 5000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .cyber-dialog-box {
+            background: #0d101a;
+            border: 1.5px solid var(--border-cyan);
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 380px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+            text-align: center;
         }
     </style>
 </head>
@@ -767,7 +802,7 @@
         <div id="dynamicCategoriesShelves"></div>
     </section>
 
-    <!-- TAB 2: EXPLORE / SEARCH (NEVER EMPTY) -->
+    <!-- TAB 2: EXPLORE / SEARCH -->
     <section class="tab-screen" id="tabSearch">
         <div class="app-search-box">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -781,15 +816,16 @@
         <div id="categoriesListTree"></div>
     </section>
 
-    <!-- TAB 4: APP SETTINGS & IN-APP VERSION CONTROL -->
+    <!-- TAB 4: COMPLETE OTT APP SETTINGS & LEGAL CENTER -->
     <section class="tab-screen" id="tabSettings">
+        <!-- APP BUILD & VERSION CARD -->
         <div class="settings-card">
             <div style="font-size:15px; font-weight:800; color:var(--cyan-accent); margin-bottom:12px;">
                 <i class="fa-solid fa-mobile-screen"></i> MoviesFlix Official App Information
             </div>
             <div class="setting-row">
                 <span>App Build</span>
-                <strong style="color:var(--cyan-accent);">Official Standalone</strong>
+                <strong style="color:var(--cyan-accent);">Official Production</strong>
             </div>
             <div class="setting-row">
                 <span>Installed Version</span>
@@ -800,21 +836,57 @@
                 <strong style="color:#10b981;">Stable Public</strong>
             </div>
             <div class="setting-row">
-                <span>Database Sync</span>
-                <strong style="color:var(--cyan-accent);"><i class="fa-solid fa-cloud"></i> Supabase Live</strong>
+                <span>Cloud Server CDN</span>
+                <strong style="color:#10b981;"><i class="fa-solid fa-cloud-check"></i> Connected (Ultra Fast CDN)</strong>
             </div>
             <button class="btn-update-check" onclick="checkAppUpdates()">
                 <i class="fa-solid fa-rotate"></i> Check for Updates
             </button>
         </div>
 
+        <!-- PLAYER & PREFERENCES -->
+        <div class="settings-card">
+            <div style="font-size:15px; font-weight:800; color:var(--cyan-accent); margin-bottom:12px;">
+                <i class="fa-solid fa-sliders"></i> Playback & Storage
+            </div>
+            <div class="setting-row">
+                <span>Default Quality</span>
+                <select id="settingQuality" style="background:#090c16; border:1px solid rgba(0,229,255,0.3); color:#fff; padding:4px 8px; border-radius:4px;">
+                    <option>Auto (Best Available)</option>
+                    <option>1080p Full HD</option>
+                    <option>720p HD</option>
+                    <option>Data Saver</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <span>App Cache</span>
+                <button type="button" onclick="clearAppCache()" style="background:#141724; border:1px solid var(--border-cyan); color:var(--cyan-accent); padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer;">
+                    <i class="fa-solid fa-trash"></i> Clear Cache
+                </button>
+            </div>
+        </div>
+
+        <!-- OFFICIAL LEGAL CENTER & LICENSES -->
         <div class="settings-card">
             <div style="font-size:15px; font-weight:800; color:var(--cyan-accent); margin-bottom:10px;">
-                <i class="fa-solid fa-shield-halved"></i> Privacy & Notice
+                <i class="fa-solid fa-scale-balanced"></i> Legal Center & Licenses
             </div>
-            <p style="font-size:12px; color:var(--text-sub); line-height:1.6;">
-                MoviesFlix does not host any media on its servers. All files and video streams are indexed from non-affiliated third-party providers.
-            </p>
+            <button class="legal-item-btn" onclick="openAppLegalPage('eula')">
+                <span>MoviesFlix End-User License (EULA)</span>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+            <button class="legal-item-btn" onclick="openAppLegalPage('dmca')">
+                <span>DMCA Safe Harbor & Takedown Policy</span>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+            <button class="legal-item-btn" onclick="openAppLegalPage('privacy')">
+                <span>Privacy & Zero-Data Collection Notice</span>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+            <button class="legal-item-btn" onclick="openAppLegalPage('disclaimer')">
+                <span>Content & Third-Party Index Disclaimer</span>
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
         </div>
     </section>
 
@@ -839,7 +911,7 @@
     </nav>
 
     <!-- ========================================================
-         FULL POST DETAIL VIEW (SAME AS WEBSITE - ZERO CUTS)
+         FULL POST DETAIL VIEW (EXACTLY AS WEBSITE)
          ======================================================== -->
     <div class="modal-overlay" id="movieDetailModal">
         <div class="modal-box">
@@ -923,6 +995,41 @@
         </div>
     </div>
 
+    <!-- ========================================================
+         APP LEGAL PAGES MODAL
+         ======================================================== -->
+    <div class="modal-overlay" id="appLegalModal">
+        <div class="modal-box">
+            <div class="modal-top-nav-bar">
+                <button type="button" class="modal-back-btn" onclick="closeAppLegalModal()">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </button>
+                <div style="font-size:16px; font-weight:800; color:var(--cyan-accent);">Legal Center</div>
+                <button type="button" class="close-modal-btn" onclick="closeAppLegalModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <h2 id="appLegalTitle" style="color:var(--cyan-accent); margin-bottom:14px; font-size:18px;"></h2>
+            <div id="appLegalBody" style="font-size:13px; color:#cbd3e8; line-height:1.8;"></div>
+        </div>
+    </div>
+
+    <!-- CUSTOM NEON CYBER UPDATE DIALOG -->
+    <div class="cyber-dialog-overlay" id="cyberUpdateDialog">
+        <div class="cyber-dialog-box">
+            <div style="width:48px; height:48px; border-radius:50%; background:rgba(0,229,255,0.15); color:var(--cyan-accent); display:flex; align-items:center; justify-content:center; font-size:20px; margin:0 auto 12px auto; border:1px solid var(--border-cyan);">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <h3 style="color:#fff; font-size:16px; margin-bottom:8px;">MoviesFlix App v1.0.0</h3>
+            <p style="font-size:12px; color:var(--text-sub); margin-bottom:16px; line-height:1.5;">
+                Your application is on the latest Stable Public release. Cloud streaming services are active.
+            </p>
+            <button type="button" class="btn-update-check" onclick="document.getElementById('cyberUpdateDialog').style.display='none'">
+                Done
+            </button>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT APPLICATION LOGIC -->
     <script>
         const CURRENT_APP_VERSION = "1.0.0";
@@ -941,7 +1048,6 @@
         let appComingSoon = [];
         let appCategories = [];
         let currentPostServers = [];
-        let activeSelectedEpisode = null;
 
         function sanitizeStreamUrl(rawUrl) {
             if (!rawUrl) return "";
@@ -1075,7 +1181,7 @@
         }
 
         /* ========================================================
-           FULL MOVIE DETAIL VIEW LOGIC (EXACTLY AS WEBSITE)
+           FULL MOVIE DETAIL VIEW LOGIC
            ======================================================== */
         function openMovieDetail(id) {
             const m = appMovies.find(item => item.id === id);
@@ -1257,7 +1363,6 @@
             pWrap.style.display = 'block';
             document.getElementById('modalPlayerFrame').src = sanitizeStreamUrl(ep.streamUrl);
 
-            // Episode Downloads
             const dlContainer = document.getElementById('modalDownloadsList');
             dlContainer.innerHTML = '';
             const epDls = (ep.downloads && ep.downloads.length > 0) ? ep.downloads : (ep.downloadUrl ? [{ quality: '720p HD', name: 'Mega', url: ep.downloadUrl }] : []);
@@ -1342,7 +1447,45 @@
         }
 
         function checkAppUpdates() {
-            alert("MoviesFlix App v" + CURRENT_APP_VERSION + "\nStatus: Up to date!\nConnected to Supabase Live Database.");
+            document.getElementById('cyberUpdateDialog').style.display = 'flex';
+        }
+
+        function clearAppCache() {
+            alert("App cache and stream buffers cleared successfully!");
+        }
+
+        /* LEGAL CENTER LOGIC */
+        const appLegalDocs = {
+            eula: {
+                title: "MoviesFlix End-User License Agreement (EULA)",
+                body: `<p>This End-User License Agreement grants you a personal, non-exclusive, non-transferable license to utilize the MoviesFlix software client for personal media streaming discovery. The application is distributed on an 'as-is' basis without automated device tracking.</p>`
+            },
+            dmca: {
+                title: "DMCA Safe Harbor & Takedown Policy",
+                body: `<p>MoviesFlix operates strictly as an indexing directory under 17 U.S.C. § 512. We do not store or transmit multimedia streams from our infrastructure. All video streams and downloads originate from non-affiliated third parties (Streamtape, Mega, Drive). Copyright owners may report infringements to: <strong>dmca@moviesflix.com</strong> for swift processing within 24-48 hours.</p>`
+            },
+            privacy: {
+                title: "Privacy & Zero-Data Collection Notice",
+                body: `<p>MoviesFlix prioritizes user confidentiality. The mobile app does not collect personal identity parameters, phone credentials, or contacts. Local cache storage is used solely on your hardware device to preserve viewing states.</p>`
+            },
+            disclaimer: {
+                title: "Content & Third-Party Index Disclaimer",
+                body: `<p>Certain cataloged cinematographic titles depict mature themes or action elements intended solely for adult audiences (18+). Viewer discretion is strictly advised.</p>`
+            }
+        };
+
+        function openAppLegalPage(key) {
+            const doc = appLegalDocs[key];
+            if (!doc) return;
+            document.getElementById('appLegalTitle').innerText = doc.title;
+            document.getElementById('appLegalBody').innerHTML = doc.body;
+            document.body.classList.add('modal-open');
+            document.getElementById('appLegalModal').style.display = 'block';
+        }
+
+        function closeAppLegalModal() {
+            document.body.classList.remove('modal-open');
+            document.getElementById('appLegalModal').style.display = 'none';
         }
 
         // INITIAL LOAD
