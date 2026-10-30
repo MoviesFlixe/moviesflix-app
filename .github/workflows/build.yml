@@ -77,17 +77,11 @@ jobs:
               target_dir = os.path.join(res_dir, folder)
               os.makedirs(target_dir, exist_ok=True)
               
-              # Square Icon
               resized = img.resize((s, s), Image.Resampling.LANCZOS)
               resized.save(os.path.join(target_dir, 'ic_launcher.png'))
-              
-              # Round Icon
               resized.save(os.path.join(target_dir, 'ic_launcher_round.png'))
-              
-              # Adaptive Foreground
               resized.save(os.path.join(target_dir, 'ic_launcher_foreground.png'))
           
-          # Splash screen image setup
           splash_dir = os.path.join(res_dir, 'drawable')
           os.makedirs(splash_dir, exist_ok=True)
           splash_img = img.resize((256, 256), Image.Resampling.LANCZOS)
@@ -95,9 +89,9 @@ jobs:
           print('Adaptive Icons and Splash Generated!')
           "
 
-      - name: Generate Production Keystore & Sign APK
+      - name: Build Official Android Release APK
         run: |
-          # Generate a standard secure release keystore
+          # 1. Create secure production keystore
           keytool -genkeypair -v -keystore release.keystore -alias moviesflix -keyalg RSA -keysize 2048 -validity 10000 -storepass moviesflix123 -keypass moviesflix123 -dname "CN=MoviesFlix, OU=Mobile, O=MoviesFlixCompany, L=Global, S=World, C=US"
           
           npx cap sync android
@@ -105,14 +99,18 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleRelease --no-daemon
           
-          # Find jarsigner and sign the release APK
+          # 2. Locate Android Build Tools
           BUILD_TOOLS_DIR=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
-          APK_PATH=$(find app/build/outputs/apk/release/ -name "*.apk" | head -n 1)
+          RAW_APK=$(find app/build/outputs/apk/release/ -name "*.apk" | head -n 1)
           
-          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore ../release.keystore -storepass moviesflix123 -keypass moviesflix123 $APK_PATH moviesflix
+          # 3. Zipalign APK
+          $BUILD_TOOLS_DIR/zipalign -f -p 4 "$RAW_APK" app/build/outputs/apk/release/aligned.apk
           
-          # Align APK
-          $BUILD_TOOLS_DIR/zipalign -v -p 4 $APK_PATH app/build/outputs/apk/release/MoviesFlix-v1.0.0.apk || cp $APK_PATH app/build/outputs/apk/release/MoviesFlix-v1.0.0.apk
+          # 4. Sign with Modern V2 & V3 Signature Scheme (Fixes "App Not Installed")
+          $BUILD_TOOLS_DIR/apksigner sign --ks ../release.keystore --ks-key-alias moviesflix --ks-pass pass:moviesflix123 --key-pass pass:moviesflix123 --out app/build/outputs/apk/release/MoviesFlix-v1.0.0.apk app/build/outputs/apk/release/aligned.apk
+          
+          # 5. Verify Signature
+          $BUILD_TOOLS_DIR/apksigner verify -v app/build/outputs/apk/release/MoviesFlix-v1.0.0.apk
 
       - name: Upload Official Production APK
         uses: actions/upload-artifact@v4
