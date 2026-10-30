@@ -13,10 +13,10 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Java JDK 17
+      - name: Setup Java JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '21'
           distribution: 'temurin'
 
       - name: Setup Node.js 20
@@ -32,10 +32,19 @@ jobs:
         run: |
           mkdir -p www
           cp -r app/* www/ 2>/dev/null || true
+          
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap telemetry off
-          npx cap init MoviesFlix com.moviesflix.app --web-dir www
+          
+          # Pre-create configuration so there are no interactive prompts
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "com.moviesflix.app",
+            "appName": "MoviesFlix",
+            "webDir": "www"
+          }
+          EOF
+
           npx cap add android
 
       - name: Setup Custom App Logo Icons
