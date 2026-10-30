@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MoviesFlix Official App</title>
+    <!-- FontAwesome 6 Pro CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Supabase SDK for Live Sync -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        :root {
+            --bg-base: #06080e;
+            --bg-card: #0e1220;
+            --cyan-accent: #00e5ff;
+            --cyan-glow: rgba(0, 229, 255, 0.4);
+            --gold-accent: #f59e0b;
+            --pink-accent: #ec4899;
+            --text-main: #f0f3fa;
+            --text-sub: #8c94ac;
+            --bottom-nav-height: 65px;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: calc(var(--bottom-nav-height) + 15px);
+            overflow-x: hidden;
+        }
+
+        /* NATIVE TOP APP BAR */
+        .app-top-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: #090c16;
+            border-bottom: 1.5px solid rgba(0, 229, 255, 0.4);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        }
+
+        .app-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .app-brand img {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            box-shadow: 0 0 10px var(--cyan-glow);
+        }
+
+        .app-brand-title {
+            font-size: 20px;
+            font-weight: 900;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+
+        .app-brand-title span {
+            color: var(--cyan-accent);
+            text-shadow: 0 0 8px var(--cyan-glow);
+        }
+
+        .header-action-btn {
+            background: #141829;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            color: var(--cyan-accent);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        /* NATIVE BOTTOM NAVIGATION BAR */
+        .app-bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100vw;
+            height: var(--bottom-nav-height);
+            background: rgba(9, 12, 22, 0.95);
+            backdrop-filter: blur(15px);
+            border-top: 1px solid rgba(0, 229, 255, 0.25);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 500;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.8);
+        }
+
+        .nav-item-btn {
+            background: none;
+            border: none;
+            color: var(--text-sub);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s all;
+            flex: 1;
+        }
+
+        .nav-item-btn i {
+            font-size: 18px;
+            transition: 0.2s transform;
+        }
+
+        .nav-item-btn.active {
+            color: var(--cyan-accent);
+        }
+
+        .nav-item-btn.active i {
+            transform: translateY(-2px);
+            text-shadow: 0 0 10px var(--cyan-glow);
+        }
+
+        /* TAB SCREENS */
+        .tab-screen {
+            display: none;
+            padding: 14px 12px;
+            animation: fadeInTab 0.2s ease-in;
+        }
+
+        .tab-screen.active {
+            display: block;
+        }
+
+        @keyframes fadeInTab {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* SEARCH BAR */
+        .app-search-box {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .app-search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 42px;
+            background: #0d111e;
+            border: 1px solid rgba(0, 229, 255, 0.35);
+            border-radius: 25px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        .app-search-box input:focus {
+            border-color: var(--cyan-accent);
+            box-shadow: 0 0 12px var(--cyan-glow);
+        }
+
+        .app-search-box i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--cyan-accent);
+        }
+
+        /* HORIZONTAL FLIP SHELVES */
+        .content-section {
+            margin-bottom: 24px;
+        }
+
+        .section-header-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            padding-left: 4px;
+        }
+
+        .section-header-title .tag-glow {
+            width: 4px;
+            height: 18px;
+            background: var(--cyan-accent);
+            box-shadow: 0 0 10px var(--cyan-glow);
+            border-radius: 2px;
+        }
+
+        .horizontal-row-shelf {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 8px;
+        }
+
+        .horizontal-row-shelf::-webkit-scrollbar {
+            display: none;
+        }
+
+        .movie-app-card {
+            flex: 0 0 140px;
+            width: 140px;
+            background: var(--bg-card);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        .movie-app-card:active {
+            transform: scale(0.96);
+            border-color: var(--cyan-accent);
+        }
+
+        .card-poster {
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            background: #090c14;
+            position: relative;
+        }
+
+        .card-poster img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .card-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.85);
+            color: var(--cyan-accent);
+            font-size: 9px;
+            font-weight: 800;
+            padding: 2px 5px;
+            border-radius: 4px;
+            border: 1px solid var(--cyan-accent);
+        }
+
+        .card-info {
+            padding: 8px;
+        }
+
+        .card-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-meta {
+            font-size: 10px;
+            color: var(--text-sub);
+            margin-top: 3px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* SETTINGS & VERSION PANEL */
+        .settings-card {
+            background: var(--bg-card);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+
+        .settings-card-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--cyan-accent);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 13px;
+        }
+
+        .setting-row:last-child {
+            border-bottom: none;
+        }
+
+        .btn-update-check {
+            width: 100%;
+            background: var(--cyan-accent);
+            color: #000;
+            font-weight: 800;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 0 15px var(--cyan-glow);
+            margin-top: 10px;
+        }
+
+        /* FULLSCREEN PLAYER OVERLAY */
+        .player-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .player-bar {
+            padding: 10px 14px;
+            background: rgba(10,10,10,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .player-bar button {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .player-iframe {
+            flex: 1;
+            width: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP HEADER -->
+    <header class="app-top-header">
+        <div class="app-brand">
+            <img src="https://i.ibb.co/TpHBH9m/file-00000000f1908208a1295719135a47e2.png" alt="Icon">
+            <div class="app-brand-title">Movies<span>Flix</span></div>
+        </div>
+        <button class="header-action-btn" onclick="switchTab('tabSettings')" title="App Info">
+            <i class="fa-solid fa-gear"></i>
+        </button>
+    </header>
+
+    <!-- TAB 1: HOME (BROWSE & CAROUSELS) -->
+    <section class="tab-screen active" id="tabHome">
+        <div class="content-section" id="sectionTrending">
+            <div class="section-header-title">
+                <div class="tag-glow" style="background:#ec4899; box-shadow:0 0 10px rgba(236,72,153,0.5);"></div>
+                <span>🔥 Top 10 Trending</span>
+            </div>
+            <div class="horizontal-row-shelf" id="shelfTrending"></div>
+        </div>
+
+        <div class="content-section" id="sectionRecent">
+            <div class="section-header-title">
+                <div class="tag-glow" style="background:#ff0055; box-shadow:0 0 10px rgba(255,0,85,0.5);"></div>
+                <span>⚡ Recently Released</span>
+            </div>
+            <div class="horizontal-row-shelf" id="shelfRecent"></div>
+        </div>
+
+        <div id="dynamicCategoriesShelves"></div>
+    </section>
+
+    <!-- TAB 2: EXPLORE / SEARCH -->
+    <section class="tab-screen" id="tabSearch">
+        <div class="app-search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="appSearchInput" placeholder="Search Movies, Series, Dramas...">
+        </div>
+        <div class="horizontal-row-shelf" id="searchResultsGrid" style="flex-wrap:wrap; justify-content:space-between; gap:12px;"></div>
+    </section>
+
+    <!-- TAB 3: CATEGORIES -->
+    <section class="tab-screen" id="tabCategories">
+        <div id="categoriesListTree"></div>
+    </section>
+
+    <!-- TAB 4: APP SETTINGS & IN-APP VERSION CONTROL -->
+    <section class="tab-screen" id="tabSettings">
+        <div class="settings-card">
+            <div class="settings-card-title">
+                <i class="fa-solid fa-mobile-screen"></i> MoviesFlix Official App Information
+            </div>
+            <div class="setting-row">
+                <span>App Build</span>
+                <strong style="color:var(--cyan-accent);">Official Standalone</strong>
+            </div>
+            <div class="setting-row">
+                <span>Installed Version</span>
+                <strong id="installedVersionText">v1.0.0</strong>
+            </div>
+            <div class="setting-row">
+                <span>Release Track</span>
+                <strong style="color:#10b981;">Stable Public</strong>
+            </div>
+            <div class="setting-row">
+                <span>Database Sync</span>
+                <strong style="color:var(--cyan-accent);"><i class="fa-solid fa-cloud"></i> Supabase Live</strong>
+            </div>
+            <button class="btn-update-check" onclick="checkAppUpdates()">
+                <i class="fa-solid fa-rotate"></i> Check for Updates
+            </button>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-card-title">
+                <i class="fa-solid fa-shield-halved"></i> App Security & Privacy
+            </div>
+            <p style="font-size:12px; color:var(--text-sub); line-height:1.6;">
+                This app connects directly to the Supabase Cloud cluster. No user accounts or personal device tracking are utilized.
+            </p>
+        </div>
+    </section>
+
+    <!-- NATIVE BOTTOM NAVIGATION BAR -->
+    <nav class="app-bottom-nav">
+        <button class="nav-item-btn active" id="btnNavHome" onclick="switchTab('tabHome')">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </button>
+        <button class="nav-item-btn" id="btnNavSearch" onclick="switchTab('tabSearch')">
+            <i class="fa-solid fa-compass"></i>
+            <span>Explore</span>
+        </button>
+        <button class="nav-item-btn" id="btnNavCategories" onclick="switchTab('tabCategories')">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>Genres</span>
+        </button>
+        <button class="nav-item-btn" id="btnNavSettings" onclick="switchTab('tabSettings')">
+            <i class="fa-solid fa-gear"></i>
+            <span>Settings</span>
+        </button>
+    </nav>
+
+    <!-- FULLSCREEN PLAYER MODAL -->
+    <div class="player-overlay" id="appPlayerOverlay">
+        <div class="player-bar">
+            <span id="playerMovieTitle" style="font-size:13px; font-weight:700;">Playing</span>
+            <button onclick="closeAppPlayer()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <iframe id="appPlayerIframe" class="player-iframe" allowfullscreen allow="autoplay; fullscreen"></iframe>
+    </div>
+
+    <!-- APP JAVASCRIPT ENGINE -->
+    <script>
+        const CURRENT_APP_VERSION = "1.0.0";
+        const SUPABASE_URL = "https://zidvtzcxktkpzrmyzexw.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_1WP138hq3WcBSbfugahlqA_r_OD8dMc";
+
+        let supabaseClient = null;
+        try {
+            if (window.supabase) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+        } catch(e) {}
+
+        let appMovies = [];
+        let appTrending = [];
+        let appCategories = [];
+
+        async function fetchAppData() {
+            if (!supabaseClient) return;
+            try {
+                const { data } = await supabaseClient.from('portal_data').select('content').eq('id', 'main_data').single();
+                if (data && data.content) {
+                    if (Array.isArray(data.content.movies)) appMovies = data.content.movies;
+                    if (Array.isArray(data.content.trending)) appTrending = data.content.trending;
+                    if (Array.isArray(data.content.categories)) appCategories = data.content.categories;
+                    renderAppHome();
+                    renderAppCategories();
+                }
+            } catch(e) {}
+        }
+
+        function renderAppHome() {
+            const shelfTrending = document.getElementById('shelfTrending');
+            shelfTrending.innerHTML = '';
+            if (appTrending.length > 0) {
+                appTrending.forEach(t => {
+                    const m = appMovies.find(item => item.id === t.movieId);
+                    if (m) shelfTrending.appendChild(createAppMovieCard(m));
+                });
+            } else {
+                document.getElementById('sectionTrending').style.display = 'none';
+            }
+
+            const shelfRecent = document.getElementById('shelfRecent');
+            shelfRecent.innerHTML = '';
+            appMovies.slice(0, 10).forEach(m => {
+                shelfRecent.appendChild(createAppMovieCard(m));
+            });
+
+            const dynamicContainer = document.getElementById('dynamicCategoriesShelves');
+            dynamicContainer.innerHTML = '';
+
+            const subCats = [...new Set(appMovies.map(m => m.subCategory))];
+            subCats.forEach(sub => {
+                const filtered = appMovies.filter(m => m.subCategory === sub);
+                const sec = document.createElement('div');
+                sec.className = 'content-section';
+                sec.innerHTML = `
+                    <div class="section-header-title">
+                        <div class="tag-glow"></div>
+                        <span>${sub}</span>
+                    </div>
+                    <div class="horizontal-row-shelf" id="shelf-${sub.replace(/\s+/g, '-')}"></div>
+                `;
+                dynamicContainer.appendChild(sec);
+
+                const shelf = document.getElementById(`shelf-${sub.replace(/\s+/g, '-')}`);
+                filtered.forEach(m => shelf.appendChild(createAppMovieCard(m)));
+            });
+        }
+
+        function createAppMovieCard(m) {
+            const card = document.createElement('div');
+            card.className = 'movie-app-card';
+            card.onclick = () => playMovieInApp(m);
+            card.innerHTML = `
+                <div class="card-poster">
+                    <span class="card-badge">${m.quality || 'HD'}</span>
+                    <img src="${m.poster}" alt="${m.title}" onerror="this.src='https://via.placeholder.com/200x300?text=No+Poster'">
+                </div>
+                <div class="card-info">
+                    <div class="card-title">${m.title}</div>
+                    <div class="card-meta">
+                        <span>${m.subCategory}</span>
+                        <span>${m.year || '2024'}</span>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        function playMovieInApp(m) {
+            let streamUrl = "";
+            if (m.type === 'series' && m.episodes && m.episodes.length > 0) {
+                streamUrl = m.episodes[0].streamUrl;
+            } else if (m.servers && m.servers.length > 0) {
+                streamUrl = m.servers[0].url;
+            } else if (m.streamUrl) {
+                streamUrl = m.streamUrl;
+            }
+
+            if (!streamUrl) {
+                alert("No stream player link available for this title!");
+                return;
+            }
+
+            document.getElementById('playerMovieTitle').innerText = m.title;
+            document.getElementById('appPlayerIframe').src = streamUrl;
+            document.getElementById('appPlayerOverlay').style.display = 'flex';
+        }
+
+        function closeAppPlayer() {
+            document.getElementById('appPlayerIframe').src = 'about:blank';
+            document.getElementById('appPlayerOverlay').style.display = 'none';
+        }
+
+        function renderAppCategories() {
+            const list = document.getElementById('categoriesListTree');
+            list.innerHTML = '';
+            appCategories.forEach(cat => {
+                const box = document.createElement('div');
+                box.className = 'settings-card';
+                box.innerHTML = `
+                    <div class="settings-card-title"><i class="fa-solid fa-folder"></i> ${cat.name}</div>
+                    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                        ${cat.subcategories.map(s => {
+                            const name = typeof s === 'string' ? s : s.name;
+                            return `<span style="background:#141829; border:1px solid rgba(0,229,255,0.3); color:#fff; font-size:11px; padding:5px 10px; border-radius:6px; cursor:pointer;" onclick="filterAppCategory('${name}')">${name}</span>`;
+                        }).join('')}
+                    </div>
+                `;
+                list.appendChild(box);
+            });
+        }
+
+        function filterAppCategory(subName) {
+            switchTab('tabSearch');
+            document.getElementById('appSearchInput').value = subName;
+            const res = appMovies.filter(m => m.subCategory.toLowerCase() === subName.toLowerCase());
+            renderSearchResults(res);
+        }
+
+        document.getElementById('appSearchInput').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase().trim();
+            if (!q) {
+                document.getElementById('searchResultsGrid').innerHTML = '';
+                return;
+            }
+            const res = appMovies.filter(m => m.title.toLowerCase().includes(q) || m.subCategory.toLowerCase().includes(q));
+            renderSearchResults(res);
+        });
+
+        function renderSearchResults(list) {
+            const grid = document.getElementById('searchResultsGrid');
+            grid.innerHTML = '';
+            list.forEach(m => grid.appendChild(createAppMovieCard(m)));
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item-btn').forEach(b => b.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+
+            if (tabId === 'tabHome') document.getElementById('btnNavHome').classList.add('active');
+            if (tabId === 'tabSearch') document.getElementById('btnNavSearch').classList.add('active');
+            if (tabId === 'tabCategories') document.getElementById('btnNavCategories').classList.add('active');
+            if (tabId === 'tabSettings') document.getElementById('btnNavSettings').classList.add('active');
+
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+
+        function checkAppUpdates() {
+            alert("App is up to date!\nInstalled Version: v" + CURRENT_APP_VERSION + "\nNo updates required.");
+        }
+
+        fetchAppData();
+    </script>
+</body>
+</html>
