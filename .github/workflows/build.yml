@@ -24,40 +24,54 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Setup Python & Image Tools
+        run: |
+          python3 -m pip install --upgrade pip pillow
+
       - name: Initialize Android App Project
         run: |
           mkdir -p www
           cp -r app/* www/ 2>/dev/null || true
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap telemetry off
           npx cap init MoviesFlix com.moviesflix.app --web-dir www
           npx cap add android
 
       - name: Setup Custom App Logo Icons
         run: |
-          curl -sL "https://i.ibb.co/TpHBH9m/file-00000000f1908208a1295719135a47e2.png" -o app_icon.png
-          
-          # Generate All Android Mipmap App Icon Sizes
-          RES_DIR="android/app/src/main/res"
-          convert app_icon.png -resize 48x48 "$RES_DIR/mipmap-mdpi/ic_launcher.png"
-          convert app_icon.png -resize 72x72 "$RES_DIR/mipmap-hdpi/ic_launcher.png"
-          convert app_icon.png -resize 96x96 "$RES_DIR/mipmap-xhdpi/ic_launcher.png"
-          convert app_icon.png -resize 144x144 "$RES_DIR/mipmap-xxhdpi/ic_launcher.png"
-          convert app_icon.png -resize 192x192 "$RES_DIR/mipmap-xxxhdpi/ic_launcher.png"
+          python3 -c "
+          import urllib.request, os
+          from PIL import Image
 
-          # Round Icons
-          convert app_icon.png -resize 48x48 "$RES_DIR/mipmap-mdpi/ic_launcher_round.png"
-          convert app_icon.png -resize 72x72 "$RES_DIR/mipmap-hdpi/ic_launcher_round.png"
-          convert app_icon.png -resize 96x96 "$RES_DIR/mipmap-xhdpi/ic_launcher_round.png"
-          convert app_icon.png -resize 144x144 "$RES_DIR/mipmap-xxhdpi/ic_launcher_round.png"
-          convert app_icon.png -resize 192x192 "$RES_DIR/mipmap-xxxhdpi/ic_launcher_round.png"
+          url = 'https://i.ibb.co/TpHBH9m/file-00000000f1908208a1295719135a47e2.png'
+          urllib.request.urlretrieve(url, 'app_icon.png')
+          img = Image.open('app_icon.png').convert('RGBA')
+
+          sizes = [
+              ('mipmap-mdpi', 48),
+              ('mipmap-hdpi', 72),
+              ('mipmap-xhdpi', 96),
+              ('mipmap-xxhdpi', 144),
+              ('mipmap-xxxhdpi', 192)
+          ]
+
+          res_dir = 'android/app/src/main/res'
+          for folder, s in sizes:
+              target_dir = os.path.join(res_dir, folder)
+              os.makedirs(target_dir, exist_ok=True)
+              resized = img.resize((s, s), Image.Resampling.LANCZOS)
+              resized.save(os.path.join(target_dir, 'ic_launcher.png'))
+              resized.save(os.path.join(target_dir, 'ic_launcher_round.png'))
+          print('Icons generated successfully!')
+          "
 
       - name: Build Official Android APK
         run: |
           npx cap sync android
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload Downloadable APK
         uses: actions/upload-artifact@v4
